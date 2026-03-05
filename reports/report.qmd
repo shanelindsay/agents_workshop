@@ -1,0 +1,75 @@
+---
+title: "Sleep and memory workshop report"
+format:
+  html:
+    toc: true
+    df-print: paged
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+library(yaml)
+library(dplyr)
+library(knitr)
+
+res <- yaml::read_yaml("outputs/results/anova.yml")
+
+desc <- bind_rows(lapply(res$descriptives, as.data.frame))
+desc$sleep <- as.factor(desc$sleep)
+desc$cue <- as.factor(desc$cue)
+
+fmt_p <- function(p) {
+  if (is.na(p)) return(NA_character_)
+  if (p < .001) return("< .001")
+  sprintf("%.3f", p)
+}
+
+fmt_f <- function(f) sprintf("%.2f", f)
+fmt_pes <- function(x) sprintf("%.3f", x)
+```
+
+## Research question
+
+Do sleep and cueing influence recall performance, and do they interact.
+
+## Descriptives
+
+```{r}
+desc <- desc %>%
+  mutate(
+    mean = as.numeric(mean),
+    sd = as.numeric(sd),
+    mean = round(mean, 2),
+    sd = round(sd, 2)
+  ) %>%
+  arrange(sleep, cue)
+
+knitr::kable(desc, digits = 2)
+```
+
+## Inferential results
+
+```{r}
+a_sleep <- res$anova$sleep
+a_cue <- res$anova$cue
+a_int <- res$anova$interaction
+```
+
+Sleep main effect: *F*(`r a_sleep$df1`, `r a_sleep$df2`) = `r fmt_f(a_sleep$f)`, *p* = `r fmt_p(a_sleep$p)`, partial η² = `r fmt_pes(a_sleep$partial_eta_sq)`.
+
+Cue main effect: *F*(`r a_cue$df1`, `r a_cue$df2`) = `r fmt_f(a_cue$f)`, *p* = `r fmt_p(a_cue$p)`, partial η² = `r fmt_pes(a_cue$partial_eta_sq)`.
+
+Sleep × cue interaction: *F*(`r a_int$df1`, `r a_int$df2`) = `r fmt_f(a_int$f)`, *p* = `r fmt_p(a_int$p)`, partial η² = `r fmt_pes(a_int$partial_eta_sq)`.
+
+## Plot
+
+![](../outputs/figures/interaction.png)
+
+## Notes on interpretation
+
+Write a short paragraph interpreting the pattern in plain language. Use APA style where appropriate.
+
+If you are unsure about assumptions or whether a follow-up test is required, say so clearly.
